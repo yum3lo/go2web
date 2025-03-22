@@ -40,6 +40,13 @@ def fetch_url(url):
 
     response = response.decode('utf-8', errors='ignore')
     headers, body = response.split('\r\n\r\n', 1)
+    
+    # Redirect handling
+    if 'HTTP/1.1 301' in headers or 'HTTP/1.1 302' in headers:
+      location_start = headers.find('Location:') + len('Location:')
+      location_end = headers.find('\r\n', location_start)
+      redirect_url = headers[location_start:location_end].strip()
+      return fetch_url(redirect_url)
 
     if 'Transfer-Encoding: chunked' in headers:
       body = handle_chunked_body(body)
