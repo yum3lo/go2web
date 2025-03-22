@@ -1,6 +1,7 @@
 import argparse
 import socket
 import ssl
+import json
 
 def fetch_url(url):
   try:
@@ -18,9 +19,6 @@ def fetch_url(url):
     # Wrapping the socket with SSL if HTTPS
     if protocol == 'https':
       context = ssl.create_default_context()
-      # Forcing TLSv1.2 or higher for the specific SSL/TLS version DuckDuckGo API requires
-      context.minimum_version = ssl.TLSVersion.TLSv1_2
-      context.maximum_version = ssl.TLSVersion.TLSv1_3
       s = context.wrap_socket(s, server_hostname=host)
       port = 443
     else:
@@ -40,14 +38,56 @@ def fetch_url(url):
 
     s.close()
 
-    return response.decode('utf-8', errors='ignore')
+    response = response.decode('utf-8', errors='ignore')
+    headers, body = response.split('\r\n\r\n', 1)
+
+    if 'Transfer-Encoding: chunked' in headers:
+      body = handle_chunked_body(body)
+
+    return body
   except Exception as e:
     return f"Error: {str(e)}"
+
+def handle_chunked_body(body):
+  cleaned_body = ""
+  while body:
+    chunk_size_end = body.find('\r\n')
+    if chunk_size_end == -1:
+      break
+
+    # Getting the chunk size (hexadecimal)
+    chunk_size_hex = body[:chunk_size_end]
+    chunk_size = int(chunk_size_hex, 16)
+
+    if chunk_size == 0:
+      break
+
+    chunk_start = chunk_size_end + 2
+    chunk_end = chunk_start + chunk_size
+    chunk_data = body[chunk_start:chunk_end]
+    cleaned_body += chunk_data
+    body = body[chunk_end + 2:]
+
+  return cleaned_body
 
 def search_web(query):
   search_url = f"https://api.duckduckgo.com/?q={query}&format=json"
   response = fetch_url(search_url)
-  return response
+
+  try:
+    data = json.loads(response)
+    related_topics = data.get("RelatedTopics", [])
+    top_results = []
+    for topic in related_topics[:10]:
+      if "Text" in topic and "FirstURL" in topic:
+        top_results.append(f"{topic['Text']} - {topic['FirstURL']}")
+
+    if not top_results:
+      return "No results found."
+
+    return "\n".join(top_results)
+  except json.JSONDecodeError:
+    return "Failed to parse search results."
 
 def main():
   parser = argparse.ArgumentParser(description="CLI tool for PWeb lab 5")
