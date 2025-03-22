@@ -1,47 +1,34 @@
-## Lab 5 - Websockets
+# Lab 5 - Websockets
 
-1. You have to write a command line program:
-2. The program should implement at least the following CLI:
-  ```
-  go2web -u <URL>         # make an HTTP request to the specified URL and print the response
-  go2web -s <search-term> # make an HTTP request to search the term using your favorite search engine and print top 10 results
-  go2web -h               # show this help
-  ```
-3. The responses from request should be human-readable (e.g. no HTML tags in the output)
+## Overview
 
-## Special conditions
+This project implements a command-line tool called `go2web` that performs HTTP requests and searches using DuckDuckGo. The program follows the requirements below:
 
-Any programming language can be used, but not the built-in/third-party libraries for making HTTP requests. GUI applications aren't allowed. The app has to be launched with `go2web` executable.
+## Features Implemented
 
-## Grading
+1. CLI commands:
+    ```
+    go2web -u <URL>         # makes an HTTP request to the specified URL and prints the response
+    go2web -s <search-term> # searches the term using DuckDuckGo and prints top 10 results
+    go2web -h               # shows help
+    ```
+2. Human-readable output
+3. Special Conditions:
+   - No built-in or third-party libraries for HTTP requests were used.
+   - The program is implemented in Python and uses raw sockets for HTTP/HTTPS communication.
+   - Handles `301` and `302` redirects.
+   - Implements an in-memory cache to store responses.
+   - Supports both JSON and HTML content types via the `Accept` header.
 
-Submission: 
-- WIP PRs/commits done in class/same day of lab;
-- Other PRs/commits for each tasks/extra points;
-- In repo README include a gif with working example.
+## Results
 
-After submission you need to present the program in class to be graded.
+Below is a GIF demonstrating the program in action:
+![ezgif com-video-to-gif-converter](https://github.com/user-attachments/assets/6eb30eb8-cda2-4b47-a2fd-8a336cbf527a)
 
-Points:
-
-- executable with `-h`, (`-u` or `-s`) options - `+5` points
-- executable with `-h`, (`-u` and `-s`) options - `+6` points
-
-You can get `+1` extra point:
-- if results/links from search engine can be accessed (using your CLI);
-- for implementing HTTP request redirects.
-
-You can get `+2` extra points:
-- for implementing an HTTP cache mechanism;
-- for implementing content negotiation e.g. by accepting and handling both JSON and HTML content types.
-
-You can get `-1` point for each unanswered question.  
-You can get `-3` points for poor git history (ex: 1-2 commits).
-
-## Hints
-
-- Before opting for some language, make sure you have the right tools: CLI parser, HTML/JSON parser, support for TCP sockets;
-- For CLI you can use built-in libraries or even Bash built-in [getopts](https://wiki.bash-hackers.org/howto/getopts_tutorial);
-- Use third-party libraries for parsing HTML and presenting it;
-- For HTTP cache you'll need either an in-memory store or file access;
-- `<search-term>` can either be a single word or all words following `-s` argument.
+## How to run
+1. Clone the repository.
+2. Run the program using:
+   ```
+   python main.py -u <URL>
+   python main.py -s <search-term>
+   ```
