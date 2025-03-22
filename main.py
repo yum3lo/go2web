@@ -3,7 +3,12 @@ import socket
 import ssl
 import json
 
+cache = {}
+
 def fetch_url(url):
+  if url in cache:
+    return cache[url]
+  
   try:
     if not url.startswith(('http://', 'https://')):
       url = 'http://' + url
@@ -50,6 +55,8 @@ def fetch_url(url):
 
     if 'Transfer-Encoding: chunked' in headers:
       body = handle_chunked_body(body)
+
+    cache[url] = body
 
     return body
   except Exception as e:
