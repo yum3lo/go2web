@@ -31,7 +31,7 @@ def fetch_url(url):
             
     s.connect((host, port))
 
-    request = f"GET {path} HTTP/1.1\r\nHost: {host}\r\nConnection: close\r\n\r\n"
+    request = f"GET {path} HTTP/1.1\r\nHost: {host}\r\nAccept: application/json, text/html\r\nConnection: close\r\n\r\n"
     s.sendall(request.encode())
 
     response = b""
