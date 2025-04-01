@@ -2,12 +2,32 @@ import argparse
 import socket
 import ssl
 import json
+from urllib.parse import urljoin
+import os
 
-cache = {}
+cache_file = 'cache.json'
+
+def load_cache():
+  if os.path.exists(cache_file):
+    try:
+      with open(cache_file, 'r', encoding='utf-8') as f:
+        return json.load(f)
+    except json.JSONDecodeError:
+      print("Cache file is corrupted. Starting with an empty cache.")
+      return {}
+  return {}
+
+def save_cache(cache_data):
+  with open(cache_file, 'w', encoding='utf-8') as f:
+    json.dump(cache_data, f, indent=2)
+
+cache = load_cache()
 
 def fetch_url(url):
-  if url in cache:
-    return cache[url]
+  cache_url = url
+  if cache_url in cache:
+    print(f"Cache hit for {cache_url}")
+    return cache[cache_url]
   
   try:
     if not url.startswith(('http://', 'https://')):
@@ -51,12 +71,19 @@ def fetch_url(url):
       location_start = headers.find('Location:') + len('Location:')
       location_end = headers.find('\r\n', location_start)
       redirect_url = headers[location_start:location_end].strip()
+    
+      if not redirect_url.startswith(('http://', 'https://')):
+        base_url = f"{protocol}://{host}"
+        redirect_url = urljoin(base_url, redirect_url)
+
       return fetch_url(redirect_url)
 
     if 'Transfer-Encoding: chunked' in headers:
       body = handle_chunked_body(body)
 
-    cache[url] = body
+    cache[cache_url] = body
+    save_cache(cache)
+    print(f"Cache updated for {url}")
 
     return body
   except Exception as e:
@@ -85,6 +112,11 @@ def handle_chunked_body(body):
   return cleaned_body
 
 def search_web(query):
+  cache_query = query
+  if cache_query in cache:
+    print(f"Cache hit for {cache_query}")
+    return cache[cache_query]
+  
   search_url = f"https://api.duckduckgo.com/?q={query}&format=json"
   response = fetch_url(search_url)
 
@@ -109,6 +141,7 @@ def main():
   parser.add_argument('-s', '--search', help='Make an HTTP request to search the term using Google and print top 10 results')
   
   args = parser.parse_args()
+  
   if args.url:
     response = fetch_url(args.url)
     print(response)
